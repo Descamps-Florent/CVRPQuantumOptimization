@@ -398,7 +398,7 @@ plt.close()
 
 startCVRP = time.time()
 
-listCities, listDemand, listVehicles, costMatrix = readVRP("../E/E-n22-k4.vrp")
+listCities, listDemand, listVehicles, costMatrix = readVRP("E/E-n22-k4.vrp")
 numberOfCities = len(listCities)
 
 ClusterTimer = Classification(numberOfCities, len(listVehicles), costMatrix, listVehicles, listDemand)
