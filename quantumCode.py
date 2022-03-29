@@ -52,16 +52,16 @@ def readVRP(file):
     #For all cities, we store coordinates (x,y)
     for i in range(0, numberCities):
         line = f.readline()
-        line = line.split(" ")
-        listCities.append([int(line[1]), int(line[2])])
+        lineNumbers = re.findall("[0-9]+", line)
+        listCities.append([int(lineNumbers[1]), int(lineNumbers[2])])
 
     f.readline()
 
     #For all cities, we store the demand
     for i in range(0, numberCities):
         line = f.readline()
-        line = line.split(" ")
-        listDemand.append(int(line[1]))
+        lineNumbers = re.findall("[0-9]+", line)
+        listDemand.append(int(lineNumbers[1]))
 
     #Generate Euclidean distances matrix
     costMatrix = generateCostMatrix(listCities)
