@@ -418,4 +418,4 @@ for i in range (len(listClusters)):
     listPositionsPerCluster.append(generateTSPPositionFromCSV(str(i)+".csv", listClusters[i]))
 endCVRP = time.time()
 
-plotTSP(listOfCities, listPositionsPerCluster, "TSP_"+str(numberOfCities)+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2))
+plotTSP(listCities, listPositionsPerCluster, "TSP_"+str(numberOfCities)+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2))
