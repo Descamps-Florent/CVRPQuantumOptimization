@@ -175,7 +175,7 @@ def generateClustersFromCSV(numberOfVehicles, numberOfCity):
 
     return listClusters
 
-def generateCostMatrixByCluster(listClusters, c2):
+def generateCostMatrixPerCluster(listClusters, c2):
     costMatrix = []
 
     for i in range(0,len(listClusters)):
@@ -369,7 +369,7 @@ for numberOfCity in range (200,201):
 
 
     listClusters = generateClustersFromCSV(numberOfVehicules, numberOfNodes)
-    clusteurCostMatrix = generateCostMatrixByCluster(listClusters, c2)
+    clusteurCostMatrix = generateCostMatrixPerCluster(listClusters, c2)
 
     plotClusters(listOfCities,listClusters, "Clusters_"+str(numberOfCity)+".png", np.round(ClusterTimer,2))
 
@@ -427,7 +427,7 @@ numberOfCities = len(listCities)
 ClusterTimer = Classification(numberOfCities, len(listVehicles), costMatrix, listVehicles, listDemand)
 
 listClusters = generateClustersFromCSV(len(listVehicles), numberOfCities)
-clusteurCostMatrix = generateCostMatrixByCluster(listClusters, costMatrix)
+clusteurCostMatrix = generateCostMatrixPerCluster(listClusters, costMatrix)
 
 plotClusters(listCities, listClusters, "Clusters_"+str(numberOfCities)+".png", np.round(ClusterTimer,2))
 
