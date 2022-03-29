@@ -324,6 +324,29 @@ def plotTSP(listCities, listPositionsPerCluster, nameOfpng, timer, timerTotal, s
     plt.close()
     return
 
+def calculateFinalCost(costMatrix, listPositionsPerCluster):
+    cost = 0
+    for i in range(0, len(listPositionsPerCluster)):
+        for j in range(0, len(listPositionsPerCluster[i])-1):
+            cost += costMatrix[j][j+1]
+    return cost
+
+def readSOL(file, numberVehicles):
+    f = open(file, "r")
+
+    listPositionsPerCluster = []
+
+    for i in range(0, numberVehicles):
+        cluster = []
+        cluster.append(0)
+        line = f.readline()
+        lineNumbers = re.findall("[0-9]+", line)
+        for j in range(1, len(lineNumbers)):
+            cluster.append(int(lineNumbers[j]))
+        cluster.append(0)
+        listPositionsPerCluster.append(cluster)
+    
+    return listPositionsPerCluster
 
 """
 #Définition des variables du problème
@@ -398,7 +421,7 @@ plt.close()
 
 startCVRP = time.time()
 
-listCities, listDemand, listVehicles, costMatrix = readVRP("E/E-n22-k4.vrp")
+listCities, listDemand, listVehicles, costMatrix = readVRP("E/E-n23-k3.vrp")
 numberOfCities = len(listCities)
 
 ClusterTimer = Classification(numberOfCities, len(listVehicles), costMatrix, listVehicles, listDemand)
@@ -418,4 +441,7 @@ for i in range (len(listClusters)):
     listPositionsPerCluster.append(generateTSPPositionFromCSV(str(i)+".csv", listClusters[i]))
 endCVRP = time.time()
 
-plotTSP(listCities, listPositionsPerCluster, "TSP_"+str(numberOfCities)+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2))
+plotTSP(listCities, listPositionsPerCluster, "TSP_"+str(numberOfCities)+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), False, False)
+
+print("Quantum Resolution:", calculateFinalCost(costMatrix, listPositionsPerCluster))
+print("Optimal Resolution:", calculateFinalCost(costMatrix, readSOL("E/E-n23-k3.sol", len(listVehicles))))
