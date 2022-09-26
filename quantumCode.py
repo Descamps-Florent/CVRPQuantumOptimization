@@ -15,19 +15,27 @@ from scipy.spatial import distance
 import time
 import re
 
+
+# To display the mapping on the qubit and other data
+# import dwave.inspector as inspector
+
+
+
 def genererateRandomCase(nbCities):
     """
-    Function that generate a random case of CVRP and return the list of the cities and it's cost matrix
+    Function that generates a random case of CVRP and return the list of the cities and it's cost matrix
     """
     listCities = [[random.randint(-50,50),random.randint(-50,50)] for i in range(0, nbCities)]
 
-    listCities.insert(0, [0,0])  #We add the repository in (0,0)
-    nbCities+=1 #We add the repository
+    listCities.insert(0, [0,0])  #We add the depot in (0,0)
+    nbCities+=1 #We add the depot
 
     #Generate Euclidean distances matrix
     costMatrix = generateCostMatrix(listCities)
 
     return listCities, costMatrix
+
+
 
 def generateCostMatrix(listCities):
     """
@@ -43,7 +51,19 @@ def generateCostMatrix(listCities):
             
     return costMatrix
 
-def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, matrixOfCapacity, matrixOfVolume):
+
+
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     CLUSTERING                                                #
+# --------------------------------------------------------------------------------------------- #
+def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, vectorOfCapacity, vectorOfVolume):
     """
     Return the clusturing of the input in the form of a dataframe : 
     "{'x0_0' : 0.0, 'x0_1' : 0.0, ..., x1_0 : 0.0, ..., x{nbOfPointToCluster}_{nbOfCluster}}", energy, is_feasible
@@ -63,13 +83,13 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, matrixOfCapac
                         | ... | i
                         | ... |
                         | ... |
-    @type  matrixOfCapacity: List of shape [nbOfCluster]
+    @type  vectorOfCapacity: List of shape [nbOfCluster]
 
-    @param matrixOfCapacity: Matrix that give the Capacity of each cluster
+    @param vectorOfCapacity: Matrix that give the Capacity of each cluster
 
-    @type  matrixOfVolume: List of shape [nbOfPointToCluster]
+    @type  vectorOfVolume: List of shape [nbOfPointToCluster]
 
-    @param matrixOfVolume: Matrix that give the cost of each point of the city
+    @param vectorOfVolume: Matrix that give the cost of each point of the city
 
     @rtype:   int
 
@@ -78,13 +98,17 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, matrixOfCapac
     #Define our model
     cqm=ConstrainedQuadraticModel()
 
-   #Preparation of our matric that will got our solution
+
+   #Preparation of our matrix that will got our solution
     x = {
     (i, d): Binary('x{}_{}'.format(i, d))
     for i in range(nbOfPointToCluster)
     for d in range(nbOfCluster)}
 
-    #Objective function
+
+    # ------------------------------------------------------------------------------------
+    #                                 Objective function:
+    # ------------------------------------------------------------------------------------
     objective = quicksum(matrixOfCost[i][j] * x[(i,d)] * x[(j,d)]
         for i in range(nbOfPointToCluster)
         for j in range(i+1, nbOfPointToCluster)
@@ -93,22 +117,33 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, matrixOfCapac
     cqm.set_objective(objective)
 
 
-    #Constraint
-    #We want the repository in every cluster
+
+    # ------------------------------------------------------------------------------------
+    #                               subject to the constraints:
+    # ------------------------------------------------------------------------------------
+    #We want the depot in every cluster
     for d in range(nbOfCluster):
         cqm.add_constraint(x[(0,d)] == 1)
 
     #The sum of the capacity require by the point should not exceed the total capacity of the cluster
+   
+   
+    print('nbOfPointToCluster : ', nbOfPointToCluster)
+    print('nbOfCluster : ', nbOfCluster)
     for d in range(nbOfCluster):
-        cqm.add_constraint(quicksum(matrixOfVolume[i] * x[(i,d)]
-        for i in range(nbOfPointToCluster)) <= matrixOfCapacity[d])
+        cqm.add_constraint(quicksum(vectorOfVolume[i] * x[(i,d)]
+        for i in range(nbOfPointToCluster)) <= vectorOfCapacity[d])
 
-    #Every point should be in 1 and only 1 cluster except the repository
+    #Every point should be in 1 and only 1 cluster except the depot
     for i in range(1,nbOfPointToCluster):
         cqm.add_constraint(quicksum(x[(i,d)]
         for d in range(nbOfCluster)) == 1)
 
 
+
+    # ------------------------------------------------------------------------------------
+    #                               Resolution & data analysis:
+    # ------------------------------------------------------------------------------------
     #We get our solution
     cqm_sampler=LeapHybridCQMSampler()
     sampleset=cqm_sampler.sample_cqm(cqm)
@@ -116,10 +151,7 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, matrixOfCapac
     #We transform it in a panda dataframe
     dataFrame = sampleset.to_pandas_dataframe(sample_column=True)
     dataFrame = dataFrame[['sample','energy','is_feasible']]
-
     dataFrame = dataFrame.sort_values(by = 'energy')
-
-    #Wa save it
     dataFrame.to_csv("clustering.csv")
 
     #We return the timer in seconds
@@ -127,15 +159,33 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, matrixOfCapac
     print("Clustering Done")
     return timer
 
-def VerifClusturing(matrixOfCluster, matrixOfCapacity, matrixOfVolume):
+ 
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     VerifClusturing                                                #
+# --------------------------------------------------------------------------------------------- #
+def VerifClusturing(matrixOfCluster, vectorOfCapacity, vectorOfVolume):
     for i in range(len(matrixOfCluster)):
         capacityTot = 0
         for city in matrixOfCluster[i]:
-            capacityTot += matrixOfVolume[city]
-        if capacityTot > matrixOfCapacity[i]:
+            capacityTot += vectorOfVolume[city]
+        if capacityTot > vectorOfCapacity[i]:
             return False
     return True
 
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                         generateClustersFromCSV                                             #
+# --------------------------------------------------------------------------------------------- #
 def generateClustersFromCSV(numberOfVehicles, numberOfCity):
     """
     Function that read the .csv file of the clusturing to return the list of cluster
@@ -156,6 +206,11 @@ def generateClustersFromCSV(numberOfVehicles, numberOfCity):
 
     return listClusters
 
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     generateCostMatrixPerCluster                                                #
+# --------------------------------------------------------------------------------------------- #
 def generateCostMatrixPerCluster(listClusters, c2):
     """
     Function that generate the cost matrix for every clusters
@@ -173,6 +228,13 @@ def generateCostMatrixPerCluster(listClusters, c2):
 
     return costMatrix
 
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     plotClusters                                                #
+# --------------------------------------------------------------------------------------------- #
 def plotClusters(listCities, listClusters, nameOfpng, timer, showNumber=False):
     """
     Function that save a plot of the clusering of a solution. We can or not show the ID of each cities thanks to the variable showNumber
@@ -204,6 +266,17 @@ def plotClusters(listCities, listClusters, nameOfpng, timer, showNumber=False):
     plt.close()
     return
 
+
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                            TSP                                                #
+# --------------------------------------------------------------------------------------------- #
 def TSP (nbOfPoint, matrixOfCost, fileName):
     """
     Return the TSP of the input in the form of a dataframe in a created file with the fileName: 
@@ -235,50 +308,57 @@ def TSP (nbOfPoint, matrixOfCost, fileName):
     #Define our model
     cqm=ConstrainedQuadraticModel()
 
-    #Preparation of our matric that will got our solution
+
+
+    #Preparation of our variables
     x = {
     (c, p): Binary('x{}_{}'.format(c, p))
     for c in range(nbOfPoint)
     for p in range(nbOfPoint+1)} #+1 cause depository take the first and last position
 
+
+
     #Objective function
     objective = quicksum(matrixOfCost[c1][c2] * x[(c1,p)] * x[(c2,p+1)]
         for c1 in range(nbOfPoint)
         for c2 in range(nbOfPoint)
-        for p in range(nbOfPoint) ) #No need to put -1 because we got 1 extra position compare to the number of city
-
+        for p in range(nbOfPoint) ) 
+        #No need to put -1 because we got 1 extra position compare to the number of city
     cqm.set_objective(objective)
 
 
-    #Constraint
-    #The repository need to be at the first and last position
+
+
+    #Constraints
+    #The depot need to be at the first and last position
     cqm.add_constraint(x[0,0] == 1)
     cqm.add_constraint(x[0,nbOfPoint] == 1)
-
-    #Every position need to get only 1 city
+    #The depot need to have only 2 positions (to update...)
+    cqm.add_constraint(quicksum(x[(0,p)]
+        for p in range(nbOfPoint+1)) == 2)
+ 
+    #Every position needs to get only 1 city
     for p in range(nbOfPoint):
         cqm.add_constraint(quicksum(x[(c,p)]
         for c in range(nbOfPoint)) == 1)
 
-    #The repository need to have only 2 position
-    cqm.add_constraint(quicksum(x[(0,p)]
-        for p in range(nbOfPoint+1)) == 2)
-
-    #Every city need to have only 1 position
+    #Every city needs to have only 1 position
     for c in range(1,nbOfPoint):
         cqm.add_constraint(quicksum(x[(c,p)]
         for p in range(nbOfPoint)) == 1)
 
+ 
+ 
+ 
     #Get the solution
     cqm_sampler=LeapHybridCQMSampler()
     sampleset=cqm_sampler.sample_cqm(cqm)
 
+
     #Transform the solution in a panda dataframe
     dataFrame = sampleset.to_pandas_dataframe(sample_column=True)
     dataFrame = dataFrame[['sample','energy','is_feasible']]
-
     dataFrame = dataFrame.sort_values(by = 'energy')
-
     #Save in a .csv
     dataFrame.to_csv(fileName)
 
@@ -287,6 +367,17 @@ def TSP (nbOfPoint, matrixOfCost, fileName):
 
     return timer
 
+
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     VerifClusturing                                                #
+# --------------------------------------------------------------------------------------------- #
 def generateTSPPositionFromCSV(nameOfCSV, clusteurOfCSV):
     """
     Function that read the .csv file of the TSP to return every cities in the good order
@@ -305,10 +396,19 @@ def generateTSPPositionFromCSV(nameOfCSV, clusteurOfCSV):
     
     return listPositionsPerCluster
 
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     plotTSP                                                #
+# --------------------------------------------------------------------------------------------- #
 def plotTSP(listCities, listPositionsPerCluster, nameOfpng, timer, timerTotal, showNumber=False, showLinkDepot=True):
     """
     Function that save a plot of the TSP of a solution. We can or not show the ID of each cities thanks to the variable 
-    showNumber and show the link with the repository thanks to showLinkDepot
+    showNumber and show the link with the depot thanks to showLinkDepot
     """
     plt.figure()
 
@@ -342,6 +442,16 @@ def plotTSP(listCities, listPositionsPerCluster, nameOfpng, timer, timerTotal, s
     plt.close()
     return
 
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     calculateFinalCost                                                #
+# --------------------------------------------------------------------------------------------- #
 def calculateFinalCost(costMatrix, listPositionsPerCluster):
     """
     Function that return the distance total of the input
@@ -352,6 +462,21 @@ def calculateFinalCost(costMatrix, listPositionsPerCluster):
             cost += costMatrix[listPositionsPerCluster[i][j]][listPositionsPerCluster[i][j+1]]
     return cost
 
+
+
+
+
+
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     readVRP                                                #
+# --------------------------------------------------------------------------------------------- #
 def readVRP(file):
     """
     Function that read the .vrp file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ 
@@ -367,7 +492,7 @@ def readVRP(file):
     line = f.readline()
     lineNumbers = re.findall("[\+\-]?[0-9]+", line)
     numberCities = int(lineNumbers[0])
-    print(lineNumbers)
+    
     numberVehicles = int(lineNumbers[1])
     #We pass some lines
     for i in range(0,4):
@@ -400,6 +525,23 @@ def readVRP(file):
 
     return listCities, listDemand, listVehicles, costMatrix
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     readSOL                                                #
+# --------------------------------------------------------------------------------------------- #
 def readSOL(file, numberVehicles):
     """
     Function that read the .sol file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ and return 
@@ -421,55 +563,108 @@ def readSOL(file, numberVehicles):
     
     return listPositionsPerCluster
 
-def selfgeneration():
+
+
+
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     selfgeneration                                                #
+# --------------------------------------------------------------------------------------------- #
+def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaConsumptionMax):
     #Define our problem, the only part you need to change for the problem you want
-    numberOfVehicules = 8
-    capacityOfCar = [50, 40, 50, 50, 50 ,50 ,50 ,50]
+    
+    # To Erase    capacityOfCar = [50, 40, 50, 50, 50 ,50 ,50 ,50]
+    
+    
     listTimerCVRP = []
     listTimerCluster = []
     listTimerTSP = []
     listnumberOfCity = []
+
+    #We generate randomly the capacity of cars
+    capacityOfCarInt = int(math.ceil( (capaConsumptionMax * numberOfCities) / numberOfCars))
+    capacityOfCar = [capacityOfCarInt for i in range(numberOfCars)]
+
+
+
+    #To ERASE
+    """
     numberOfCityMin = 200
     numberOfCityMax = 201
     numberOfCityStep = 1
+    """
+    #To ERASE for numberOfCity in range (numberOfCityMin,numberOfCityMax,numberOfCityStep):
 
 
-    for numberOfCity in range (numberOfCityMin,numberOfCityMax,numberOfCityStep):
-        #We generate the needed requirement for execute our problem
-        listOfCities, c2 = genererateRandomCase (numberOfCity)
-        numberOfNodes = numberOfCity + 1 #We have n cities and 1 repository
-        volume = [1 for i in range (numberOfCity)]
-        volume.insert(0,0) #The repository have no volume
-        startCVRP = time.time()
+    #We generate the needed requirement for execute our problem
+    #The cities and the costMatrix c2
+    listOfCities, c2 = genererateRandomCase (numberOfCity)
+    numberOfNodes = numberOfCity + 1 #We have n cities and 1 depot
 
-        #We generate our clustering
-        ClusterTimer = Classification(numberOfNodes,numberOfVehicules,c2,capacityOfCar,volume)
+    # We add the capacity consumption of each package/city
 
-        #We prepare our cluster for the TSP and to plot them
-        listClusters = generateClustersFromCSV(numberOfVehicules, numberOfNodes)
-        clusteurCostMatrix = generateCostMatrixPerCluster(listClusters, c2)
-        plotClusters(listOfCities,listClusters, "Clusters_"+str(numberOfCity)+".png", np.round(ClusterTimer,2))
+    
+ 
+    volume = []
+    for i in range(numberOfCity):
+        n = random.randint(capaConsumptionMin,capaConsumptionMax)
+        volume.append(n)
 
-        #For each cluster, we do one TSP
-        TSPTimer = 0
-        for i in range (len(listClusters)):
-            TSPTimer += TSP(len(listClusters[i]),clusteurCostMatrix[i], str(i)+".csv")
+    print("random capacityOfCar : ", capacityOfCar)
+    print("numberOfCity:", numberOfCity)
+    print(capacityOfCar)
+    print("random capa consumption ")
+    print(volume)
+    print("numberOfNodes :", numberOfNodes)
 
-        listPositionsPerCluster = []
-        #We sorted our cities by cluster and by position in this cluster
-        for i in range (len(listClusters)):
-            listPositionsPerCluster.append(generateTSPPositionFromCSV(str(i)+".csv",listClusters[i]))
-
-        endCVRP = time.time()
-        #We plot the final result
-        plotTSP(listOfCities,listPositionsPerCluster,"TSP_"+str(numberOfCity)+".png", np.round(TSPTimer,2),np.round(endCVRP-startCVRP,2), False, False)
-
-        listTimerCluster.append(np.round(ClusterTimer,2))
-        listTimerCVRP.append(np.round(endCVRP-startCVRP,2))
-        listTimerTSP.append(np.round(TSPTimer,2))
-        listnumberOfCity.append(numberOfCity)
+    # TO ERASE    volume = [1 for i in range (numberOfCity)]
+    
+    volume.insert(0,0) #The depot have no volume
 
 
+
+ 
+
+    startCVRP = time.time()
+
+    #We generate our clustering
+    ClusterTimer = Classification(numberOfCity,len(capacityOfCar),c2,capacityOfCar,volume)
+   
+    #We prepare our cluster for the TSP and to plot them
+    listClusters = generateClustersFromCSV(len(capacityOfCar), numberOfCity)
+
+    
+    print('Feasible? => ', VerifClusturing(listClusters,capacityOfCar,volume))
+
+
+    clusteurCostMatrix = generateCostMatrixPerCluster(listClusters, c2)
+    plotClusters(listOfCities,listClusters, "Clusters_"+str(numberOfCity)+".png", np.round(ClusterTimer,2))
+
+    #For each cluster, we do one TSP
+    TSPTimer = 0
+    for i in range (len(listClusters)):
+        TSPTimer += TSP(len(listClusters[i]),clusteurCostMatrix[i], str(i)+".csv")
+
+    listPositionsPerCluster = []
+    #We sorted our cities by cluster and by position in this cluster
+    for i in range (len(listClusters)):
+        listPositionsPerCluster.append(generateTSPPositionFromCSV(str(i)+".csv",listClusters[i]))
+
+    endCVRP = time.time()
+    #We plot the final result
+    plotTSP(listOfCities,listPositionsPerCluster,"TSP_"+str(numberOfCity)+".png", np.round(TSPTimer,2),np.round(endCVRP-startCVRP,2), True, True)
+
+    listTimerCluster.append(np.round(ClusterTimer,2))
+    listTimerCVRP.append(np.round(endCVRP-startCVRP,2))
+    listTimerTSP.append(np.round(TSPTimer,2))
+    listnumberOfCity.append(numberOfCity)
+ 
     #We plot every timer, usefull when we got a lot of data
     plt.figure()
     plt.plot(listnumberOfCity,listTimerCluster)
@@ -497,8 +692,30 @@ def selfgeneration():
     plt.grid()
     plt.savefig("Synchrone temps d'execution du TSP.png")
     plt.close()
+
+    # We calculate and print the final cost of our solution and the one of the optimised solution
+    print("D-Wave Hybrid Resolution:", calculateFinalCost(c2, listPositionsPerCluster))
+ 
+
+ 
     return
 
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     literatureGeneration                                                #
+# --------------------------------------------------------------------------------------------- #
 def literatureGeneration(fileName) :
     startCVRP = time.time()
 
@@ -506,21 +723,25 @@ def literatureGeneration(fileName) :
     listCities, listDemand, listVehicles, costMatrix = readVRP(str(fileName)+".vrp")
     numberOfCities = len(listCities)
 
+
+    #                     ------- clustering -------
     #We do the clustering
     ClusterTimer = Classification(numberOfCities, len(listVehicles), costMatrix, listVehicles, listDemand)
 
     #We prepare our cluster for the TSP and to plot them
     listClusters = generateClustersFromCSV(len(listVehicles), numberOfCities)
-    print(VerifClusturing(listClusters,listVehicles,listDemand))
+ 
     clusteurCostMatrix = generateCostMatrixPerCluster(listClusters, costMatrix)
     plotClusters(listCities, listClusters, "Clusters_"+fileName+".png", np.round(ClusterTimer,2))
 
 
-
+    #                         ------- TSP -------
     #For each cluster, we do 1 TSP
     TSPTimer = 0
     for i in range (len(listClusters)):
         TSPTimer += TSP(len(listClusters[i]),clusteurCostMatrix[i], str(i)+".csv")
+
+
 
     listPositionsPerCluster = []
     #We sorted our cities by cluster and by position in this cluster
@@ -528,14 +749,70 @@ def literatureGeneration(fileName) :
         listPositionsPerCluster.append(generateTSPPositionFromCSV(str(i)+".csv", listClusters[i]))
     endCVRP = time.time()
 
+
+
     #We plot our final result
     plotTSP(listCities, listPositionsPerCluster, "TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
+
+
 
     #We calculate and print the final cost of our solution and the one of the optimised solution
     print("Quantum Resolution:", calculateFinalCost(costMatrix, listPositionsPerCluster))
     print("Optimal Resolution:", calculateFinalCost(costMatrix, readSOL(str(fileName)+".sol", len(listVehicles))))
     return
+ 
 
 
-#Main 
-literatureGeneration("E-n30-k3")
+
+
+
+
+
+
+
+# -------------------------------------------------------------------------------------------- #
+#                                         MAIN
+# -------------------------------------------------------------------------------------------- #
+
+#                                     Literature instances
+# Literature instances from http://vrp.galgos.inf.puc-rio.br/index.php/en/ 
+
+# Set A (Augerat, 1995) 
+literatureGeneration("A-n32-k5")
+
+# Set B (Augerat, 1995)
+# literatureGeneration("B-n57-k7")
+
+# Set E (Christofides and Eilon, 1969) 
+# literatureGeneration("E-n30-k3")
+# literatureGeneration("E-n101-k14")
+
+
+# Set M (Christofides, Mingozzi and Toth, 1979) 
+# literatureGeneration("M-n101-k10")
+# literatureGeneration("M-n200-k17")
+
+
+
+
+# CODE TO UPDATE FOR NEGATIVE COORDs
+# Set F (Fisher, 1994)   
+# literatureGeneration("F-n45-k4")
+# Golden et al. (1998)
+# literatureGeneration("Golden_1")
+# Li et al. (2005) 
+# literatureGeneration("Li_21")
+# DIMACS (2021)
+# literatureGeneration("Loggi-n401-k23")
+# Limits of the machine ? To ckeck:
+# Set X (Uchoa et al. (2014))
+#
+
+"""
+#                                       self generation
+numberOfCars        = 3
+numberOfCities      = 20
+capaConsumptionMin  = 1
+capaConsumptionMax  = 4
+selfgeneration(numberOfCars, numberOfCities, capaConsumptionMin, capaConsumptionMax)
+"""
