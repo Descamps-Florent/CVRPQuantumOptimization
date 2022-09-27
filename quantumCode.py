@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import random
 import math
-from scipy.spatial import distance
 import time
 import re
 
@@ -46,9 +45,9 @@ def generateCostMatrix(listCities):
     for i in range(0, len(listCities)):
         lineCostMatrix = []
         for j in range(0, len(listCities)):
-            lineCostMatrix.append(distance.euclidean(listCities[i], listCities[j]))
+            lineCostMatrix.append(round(math.sqrt((listCities[i][0]-listCities[j][0])**2 + (listCities[i][1]-listCities[j][1])**2)))
         costMatrix.append(lineCostMatrix)
-            
+                    
     return costMatrix
 
 
@@ -778,7 +777,7 @@ def literatureGeneration(fileName) :
 # Literature instances from http://vrp.galgos.inf.puc-rio.br/index.php/en/ 
 
 # Set A (Augerat, 1995) 
-literatureGeneration("A-n32-k5")
+literatureGeneration("E-n33-k4")
 
 # Set B (Augerat, 1995)
 # literatureGeneration("B-n57-k7")
