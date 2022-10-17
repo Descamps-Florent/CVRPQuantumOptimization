@@ -14,7 +14,6 @@ import math
 import time
 import re
 
-
 # To display the mapping on the qubit and other data
 # import dwave.inspector as inspector
 
@@ -51,6 +50,15 @@ def generateCostMatrix(listCities):
     return costMatrix
 
 
+def plotCostMatrix(costMatrix):
+    cityNumber = [i for i in range(0,len(costMatrix))]
+    df = pd.DataFrame(costMatrix, columns=cityNumber, index=cityNumber)
+    text_file = open("CostMatrix.txt", "w")
+    dfAsString = df.to_string(header=True, index=True)
+    text_file.write(dfAsString)
+    text_file.close()
+    
+
 
 
 
@@ -70,12 +78,9 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, vectorOfCapac
     This function can be used to find the clustering of an actual problem.
  
     @type  nbOfPointToCluster: int
-
     @param nbOfPointToCluster: Number of point that will be subdivised in cluster
-
     @type  nbOfCluster: int
     @param nbOfCluster: Number of cluster that will subdivise our point
-
     @type  matrixOfCost: List of shape [nbOfPointToCluster, nbOfPointToCluster]
     @param matrixOfCost: Matrix that give the Cost between the point i and the point j,
                            j
@@ -83,15 +88,10 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, vectorOfCapac
                         | ... |
                         | ... |
     @type  vectorOfCapacity: List of shape [nbOfCluster]
-
     @param vectorOfCapacity: Matrix that give the Capacity of each cluster
-
     @type  vectorOfVolume: List of shape [nbOfPointToCluster]
-
     @param vectorOfVolume: Matrix that give the cost of each point of the city
-
     @rtype:   int
-
     @return:  the timer of the clustering.
     """
     #Define our model
@@ -281,13 +281,10 @@ def TSP (nbOfPoint, matrixOfCost, fileName):
     Return the TSP of the input in the form of a dataframe in a created file with the fileName: 
     "{'x0_0' : 0.0, 'x0_1' : 0.0, ..., x1_0 : 0.0, ..., x{nbOfPoint+1}_{nbOfPoint+1}}", energy, is_feasible
     x{c}_{p} represente the binary of the city c in the position p to know if the city c is in the position p
-
     This function can be used to find the TSP of an actual problem.
  
     @type  nbOfPoint: int.
-
     @param nbOfPoint: Number of point that will be sorted to get the shortest distance
-
     @type  matrixOfCost: List of shape [nbOfPointToCluster, nbOfPointToCluster]
     @param matrixOfCost: Matrix that give the Cost between the point i and the point j,
                            j
@@ -296,11 +293,8 @@ def TSP (nbOfPoint, matrixOfCost, fileName):
                         | ... |
     
     @type  fileName: str
-
     @param fileName: String that represente the name of the file created at the end of the function
-
     @rtype:   int
-
     @return:  the time of the execution of the Quantum TSP.
     """
     
@@ -720,6 +714,7 @@ def literatureGeneration(fileName) :
 
     #We get the data of the problem
     listCities, listDemand, listVehicles, costMatrix = readVRP(str(fileName)+".vrp")
+    plotCostMatrix(costMatrix)
     numberOfCities = len(listCities)
 
 
@@ -777,7 +772,7 @@ def literatureGeneration(fileName) :
 # Literature instances from http://vrp.galgos.inf.puc-rio.br/index.php/en/ 
 
 # Set A (Augerat, 1995) 
-literatureGeneration("E-n33-k4")
+literatureGeneration("E-n23-k3")
 
 # Set B (Augerat, 1995)
 # literatureGeneration("B-n57-k7")
