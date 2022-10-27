@@ -58,6 +58,7 @@ def plotCostMatrix(costMatrix):
     text_file.write(dfAsString)
     text_file.close()
     
+    return
 
 
 
@@ -105,9 +106,9 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, vectorOfCapac
     for d in range(nbOfCluster)}
 
 
-    # ------------------------------------------------------------------------------------
-    #                                 Objective function:
-    # ------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------ #
+    #                                 Objective function:                                  #
+    # ------------------------------------------------------------------------------------ #
     objective = quicksum(matrixOfCost[i][j] * x[(i,d)] * x[(j,d)]
         for i in range(nbOfPointToCluster)
         for j in range(i+1, nbOfPointToCluster)
@@ -117,9 +118,9 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, vectorOfCapac
 
 
 
-    # ------------------------------------------------------------------------------------
-    #                               subject to the constraints:
-    # ------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------ #
+    #                               subject to the constraints:                            #
+    # ------------------------------------------------------------------------------------ #
     #We want the depot in every cluster
     for d in range(nbOfCluster):
         cqm.add_constraint(x[(0,d)] == 1)
@@ -140,9 +141,9 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, vectorOfCapac
 
 
 
-    # ------------------------------------------------------------------------------------
-    #                               Resolution & data analysis:
-    # ------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------ #
+    #                               Resolution & data analysis:                            #
+    # ------------------------------------------------------------------------------------ #
     #We get our solution
     cqm_sampler=LeapHybridCQMSampler()
     sampleset=cqm_sampler.sample_cqm(cqm)
@@ -164,7 +165,7 @@ def Classification (nbOfPointToCluster, nbOfCluster, matrixOfCost, vectorOfCapac
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     VerifClusturing                                                #
+#                                     VerifClusturing                                           #
 # --------------------------------------------------------------------------------------------- #
 def VerifClusturing(matrixOfCluster, vectorOfCapacity, vectorOfVolume):
     for i in range(len(matrixOfCluster)):
@@ -183,7 +184,7 @@ def VerifClusturing(matrixOfCluster, vectorOfCapacity, vectorOfVolume):
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                         generateClustersFromCSV                                             #
+#                                         generateClustersFromCSV                               #
 # --------------------------------------------------------------------------------------------- #
 def generateClustersFromCSV(numberOfVehicles, numberOfCity):
     """
@@ -208,7 +209,7 @@ def generateClustersFromCSV(numberOfVehicles, numberOfCity):
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     generateCostMatrixPerCluster                                                #
+#                                     generateCostMatrixPerCluster                              #
 # --------------------------------------------------------------------------------------------- #
 def generateCostMatrixPerCluster(listClusters, c2):
     """
@@ -232,7 +233,7 @@ def generateCostMatrixPerCluster(listClusters, c2):
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     plotClusters                                                #
+#                                     plotClusters                                              #
 # --------------------------------------------------------------------------------------------- #
 def plotClusters(listCities, listClusters, nameOfpng, timer, showNumber=False):
     """
@@ -369,7 +370,7 @@ def TSP (nbOfPoint, matrixOfCost, fileName):
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     VerifClusturing                                                #
+#                                     VerifClusturing                                           #
 # --------------------------------------------------------------------------------------------- #
 def generateTSPPositionFromCSV(nameOfCSV, clusteurOfCSV):
     """
@@ -396,7 +397,7 @@ def generateTSPPositionFromCSV(nameOfCSV, clusteurOfCSV):
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     plotTSP                                                #
+#                                     plotTSP                                                   #
 # --------------------------------------------------------------------------------------------- #
 def plotTSP(listCities, listPositionsPerCluster, nameOfpng, timer, timerTotal, showNumber=False, showLinkDepot=True):
     """
@@ -443,7 +444,7 @@ def plotTSP(listCities, listPositionsPerCluster, nameOfpng, timer, timerTotal, s
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     calculateFinalCost                                                #
+#                                     calculateFinalCost                                        #
 # --------------------------------------------------------------------------------------------- #
 def calculateFinalCost(costMatrix, listPositionsPerCluster):
     """
@@ -468,7 +469,7 @@ def calculateFinalCost(costMatrix, listPositionsPerCluster):
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     readVRP                                                #
+#                                     readVRP                                                   #
 # --------------------------------------------------------------------------------------------- #
 def readVRP(file):
     """
@@ -487,22 +488,22 @@ def readVRP(file):
     numberCities = int(lineNumbers[0])
     
     numberVehicles = int(lineNumbers[1])
-    #We pass some lines
-    for i in range(0,4):
-        f.readline()
+    #We pass some lines until Capacity section
+    while ("CAPACITY : " in line) == 0:
+        line = f.readline()
 
     #We get the capacity of vehicles
-    line = f.readline()
     lineNumbers = re.findall("[\+\-]?[0-9]+", line)
     for i in range(0, numberVehicles):
         listVehicles.append(int(lineNumbers[0]))
 
-    f.readline()
+    while "NODE_COORD_SECTION\n" != line:
+        line = f.readline()
 
     #For all cities, we store coordinates (x,y)
     for i in range(0, numberCities):
         line = f.readline()
-        lineNumbers = re.findall("[\+\-]?[0-9]+", line)
+        lineNumbers = re.findall("[\+\-]?[0-9]+[.]?[0-9]*", line)
         listCities.append([int(lineNumbers[1]), int(lineNumbers[2])])
 
     f.readline()
@@ -528,12 +529,89 @@ def readVRP(file):
 
 
 
+# --------------------------------------------------------------------------------------------- #
+#                                     readVRPWithoutListCities                                  #
+# --------------------------------------------------------------------------------------------- #
+def readVRPWithoutListCities(file):
+    """
+    Function that read the .vrp file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ 
+    and return the list of cities, the list of demand of every cities, the list of capacity of every vehicules and the cost matrix
+    """
+    f = open(file, "r")
+
+    costMatrix = []
+    listDemand = []
+    listVehicles = []
+
+    #We get the number of cities and vehicles from filename
+    line = f.readline()
+    lineNumbers = re.findall("[\+\-]?[0-9]+", line)
+    numberCities = int(lineNumbers[0])
+    
+    numberVehicles = int(lineNumbers[1])
+    #We pass some lines until Capacity section
+    while ("CAPACITY : " in line) == 0:
+        line = f.readline()
+
+    #We get the capacity of vehicles
+    lineNumbers = re.findall("[\+\-]?[0-9]+", line)
+    for i in range(0, numberVehicles):
+        listVehicles.append(int(lineNumbers[0]))
+
+    while "EDGE_WEIGHT_SECTION\n" != line:
+        line = f.readline()
+    listUnorderedCost = []
+
+    while (line != "DEMAND_SECTION\n"):
+        line = f.readline()
+        costsInsideLine = re.findall("[0-9]+", line)
+        for i in range(0,len(costsInsideLine)):
+            listUnorderedCost.append(costsInsideLine[i])
+    
+    lineMatrix = []
+
+    #We store each weigth in a cost matrix
+    for i in range(0, numberCities):
+        lineMatrix.clear()
+        for j in range(0, numberCities):
+            if i>j:
+                lineMatrix.append(int(listUnorderedCost.pop(0)))
+            else:
+                lineMatrix.append(0)
+        #We add a new line in the matrix
+        costMatrix.append(lineMatrix[:])
+    
+    #We copy the values ​​from the lower triangular matrix to the upper triangular matrix
+    for i in range(1, numberCities):
+        for j in range(0,i):
+            costMatrix[j][i] = costMatrix[i][j]
+
+
+
+    #For all cities, we store the demand
+    for i in range(0, numberCities):
+        line = f.readline()
+        lineNumbers = re.findall("[\+\-]?[0-9]+", line)
+        listDemand.append(int(lineNumbers[1]))
+
+
+    return listDemand, listVehicles, costMatrix
+
+
+
+
+
+
+
+
+
+
 
 
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     readSOL                                                #
+#                                     readSOL                                                   #
 # --------------------------------------------------------------------------------------------- #
 def readSOL(file, numberVehicles):
     """
@@ -567,7 +645,7 @@ def readSOL(file, numberVehicles):
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     selfgeneration                                                #
+#                                     selfgeneration                                            #
 # --------------------------------------------------------------------------------------------- #
 def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaConsumptionMax):
     #Define our problem, the only part you need to change for the problem you want
@@ -707,7 +785,7 @@ def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaCons
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     literatureGeneration                                                #
+#                                     literatureGeneration                                      #
 # --------------------------------------------------------------------------------------------- #
 def literatureGeneration(fileName) :
     startCVRP = time.time()
@@ -761,11 +839,62 @@ def literatureGeneration(fileName) :
 
 
 
+# --------------------------------------------------------------------------------------------- #
+#                               literatureGenerationWithoutListCities                           #
+# --------------------------------------------------------------------------------------------- #
+def literatureGenerationWithoutListCities(fileName) :
+    startCVRP = time.time()
+
+    #We get the data of the problem
+    listDemand, listVehicles, costMatrix = readVRPWithoutListCities(str(fileName)+".vrp")
+    plotCostMatrix(costMatrix)
+    numberOfCities = len(costMatrix[0])
+
+
+    #                     ------- clustering -------
+    #We do the clustering
+    ClusterTimer = Classification(numberOfCities, len(listVehicles), costMatrix, listVehicles, listDemand)
+
+    #We prepare our cluster for the TSP and to plot them
+    listClusters = generateClustersFromCSV(len(listVehicles), numberOfCities)
+ 
+    clusteurCostMatrix = generateCostMatrixPerCluster(listClusters, costMatrix)
+
+
+    #                         ------- TSP -------
+    #For each cluster, we do 1 TSP
+    TSPTimer = 0
+    for i in range (len(listClusters)):
+        TSPTimer += TSP(len(listClusters[i]),clusteurCostMatrix[i], str(i)+".csv")
+
+
+
+    listPositionsPerCluster = []
+    #We sorted our cities by cluster and by position in this cluster
+    for i in range (len(listClusters)):
+        listPositionsPerCluster.append(generateTSPPositionFromCSV(str(i)+".csv", listClusters[i]))
+    endCVRP = time.time()
+
+
+
+    #We calculate and print the final cost of our solution and the one of the optimised solution
+    print("Quantum Resolution:", calculateFinalCost(costMatrix, listPositionsPerCluster))
+    print("Optimal Resolution:", calculateFinalCost(costMatrix, readSOL(str(fileName)+".sol", len(listVehicles))))
+    return
+ 
+
+
+
+
+
+
+
+
 
 
 
 # -------------------------------------------------------------------------------------------- #
-#                                         MAIN
+#                                         MAIN                                                 #
 # -------------------------------------------------------------------------------------------- #
 
 #                                     Literature instances
@@ -773,7 +902,8 @@ def literatureGeneration(fileName) :
 
 # Set A (Augerat, 1995) 
 literatureGeneration("E-n23-k3")
-
+literatureGenerationWithoutListCities("E-n13-k4")
+literatureGenerationWithoutListCities("Loggi-n401-k23")
 # Set B (Augerat, 1995)
 # literatureGeneration("B-n57-k7")
 
