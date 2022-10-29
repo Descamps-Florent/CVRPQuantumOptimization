@@ -837,6 +837,7 @@ def literatureGeneration(fileName) :
     endCVRP = time.time()
 
 
+    
     #We plot our final result
     plotTSP(listCities, listPositionsPerCluster, "TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
 
@@ -888,8 +889,7 @@ def literatureGenerationWithoutListCities(fileName) :
     for i in range (len(listClusters)):
         listPositionsPerCluster.append(generateTSPPositionFromCSV(str(i)+".csv", listClusters[i]))
     endCVRP = time.time()
-
-    print(listPositionsPerCluster)
+    
 
 
     #We calculate and print the final cost of our solution and the one of the optimised solution
