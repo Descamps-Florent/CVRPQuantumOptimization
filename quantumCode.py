@@ -388,6 +388,9 @@ def generateTSPPositionFromCSV(nameOfCSV, clusteurOfCSV):
             if(relation[keyList] == 1):
                 listPositionsPerCluster[j] = int(clusteurOfCSV[i])
     
+    #We add the return path to deposit 
+    listPositionsPerCluster.append(0)
+
     return listPositionsPerCluster
 
 
@@ -410,7 +413,6 @@ def plotTSP(listCities, listPositionsPerCluster, nameOfpng, timer, timerTotal, s
     
     #For each cluster
     for i in range(0, len(listPositionsPerCluster)):
-        listPositionsPerCluster[i].append(0)
         #For each city in a cluster
         for j in range(0, len(listPositionsPerCluster[i])):
             #We plot the city with the color defined for the cluster
@@ -476,7 +478,12 @@ def readVRP(file):
     Function that read the .vrp file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ 
     and return the list of cities, the list of demand of every cities, the list of capacity of every vehicules and the cost matrix
     """
-    f = open(file, "r")
+
+    try:
+        f = open(file, "r")
+    except OSError:
+        print("Could not open/read file:", file)
+        exit()
 
     listCities = []
     listDemand = []
@@ -537,7 +544,11 @@ def readVRPWithoutListCities(file):
     Function that read the .vrp file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ 
     and return the list of cities, the list of demand of every cities, the list of capacity of every vehicules and the cost matrix
     """
-    f = open(file, "r")
+    try:
+        f = open(file, "r")
+    except OSError:
+        print("Could not open/read file:", file)
+        exit()
 
     costMatrix = []
     listDemand = []
@@ -618,7 +629,11 @@ def readSOL(file, numberVehicles):
     Function that read the .sol file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ and return 
     the supposed optimised solution of our problem
     """
-    f = open(file, "r")
+    try:
+        f = open(file, "r")
+    except OSError:
+        print("Could not open/read file:", file)
+        exit()
 
     listPositionsPerCluster = []
 
@@ -647,7 +662,7 @@ def readSOL(file, numberVehicles):
 # --------------------------------------------------------------------------------------------- #
 #                                     selfgeneration                                            #
 # --------------------------------------------------------------------------------------------- #
-def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaConsumptionMax):
+def selfgeneration(numberOfVehicles, numberOfCities, capaConsumptionMin, capaConsumptionMax):
     #Define our problem, the only part you need to change for the problem you want
     
     # To Erase    capacityOfCar = [50, 40, 50, 50, 50 ,50 ,50 ,50]
@@ -658,9 +673,9 @@ def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaCons
     listTimerTSP = []
     listnumberOfCity = []
 
-    #We generate randomly the capacity of cars
-    capacityOfCarInt = int(math.ceil( (capaConsumptionMax * numberOfCities) / numberOfCars))
-    capacityOfCar = [capacityOfCarInt for i in range(numberOfCars)]
+    #We generate randomly the capacity of vehicles
+    capacityOfCarInt = int(math.ceil( (capaConsumptionMax * numberOfCities) / numberOfVehicles))
+    capacityOfCar = [capacityOfCarInt for i in range(numberOfVehicles)]
 
 
 
@@ -675,20 +690,20 @@ def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaCons
 
     #We generate the needed requirement for execute our problem
     #The cities and the costMatrix c2
-    listOfCities, c2 = genererateRandomCase (numberOfCity)
-    numberOfNodes = numberOfCity + 1 #We have n cities and 1 depot
+    listOfCities, c2 = genererateRandomCase (numberOfCities)
+    numberOfNodes = numberOfCities + 1 #We have n cities and 1 depot
 
     # We add the capacity consumption of each package/city
 
     
  
     volume = []
-    for i in range(numberOfCity):
+    for i in range(numberOfCities):
         n = random.randint(capaConsumptionMin,capaConsumptionMax)
         volume.append(n)
 
     print("random capacityOfCar : ", capacityOfCar)
-    print("numberOfCity:", numberOfCity)
+    print("numberOfCity:", numberOfCities)
     print(capacityOfCar)
     print("random capa consumption ")
     print(volume)
@@ -822,11 +837,10 @@ def literatureGeneration(fileName) :
     endCVRP = time.time()
 
 
-
     #We plot our final result
     plotTSP(listCities, listPositionsPerCluster, "TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
 
-
+    
 
     #We calculate and print the final cost of our solution and the one of the optimised solution
     print("Quantum Resolution:", calculateFinalCost(costMatrix, listPositionsPerCluster))
@@ -875,6 +889,7 @@ def literatureGenerationWithoutListCities(fileName) :
         listPositionsPerCluster.append(generateTSPPositionFromCSV(str(i)+".csv", listClusters[i]))
     endCVRP = time.time()
 
+    print(listPositionsPerCluster)
 
 
     #We calculate and print the final cost of our solution and the one of the optimised solution
@@ -903,7 +918,7 @@ def literatureGenerationWithoutListCities(fileName) :
 # Set A (Augerat, 1995) 
 literatureGeneration("E-n23-k3")
 literatureGenerationWithoutListCities("E-n13-k4")
-literatureGenerationWithoutListCities("Loggi-n401-k23")
+#literatureGenerationWithoutListCities("Loggi-n401-k23")
 # Set B (Augerat, 1995)
 # literatureGeneration("B-n57-k7")
 
