@@ -13,6 +13,7 @@ import random
 import math
 import time
 import re
+import os
 
 # To display the mapping on the qubit and other data
 # import dwave.inspector as inspector
@@ -388,9 +389,6 @@ def generateTSPPositionFromCSV(nameOfCSV, clusteurOfCSV):
             if(relation[keyList] == 1):
                 listPositionsPerCluster[j] = int(clusteurOfCSV[i])
     
-    #We add the return path to deposit 
-    listPositionsPerCluster.append(0)
-
     return listPositionsPerCluster
 
 
@@ -413,6 +411,7 @@ def plotTSP(listCities, listPositionsPerCluster, nameOfpng, timer, timerTotal, s
     
     #For each cluster
     for i in range(0, len(listPositionsPerCluster)):
+        listPositionsPerCluster[i].append(0)
         #For each city in a cluster
         for j in range(0, len(listPositionsPerCluster[i])):
             #We plot the city with the color defined for the cluster
@@ -478,12 +477,7 @@ def readVRP(file):
     Function that read the .vrp file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ 
     and return the list of cities, the list of demand of every cities, the list of capacity of every vehicules and the cost matrix
     """
-
-    try:
-        f = open(file, "r")
-    except OSError:
-        print("Could not open/read file:", file)
-        exit()
+    f = open(file, "r")
 
     listCities = []
     listDemand = []
@@ -504,7 +498,7 @@ def readVRP(file):
     for i in range(0, numberVehicles):
         listVehicles.append(int(lineNumbers[0]))
 
-    while "NODE_COORD_SECTION\n" != line:
+    while ("NODE_COORD_SECTION" in line) == 0:
         line = f.readline()
 
     #For all cities, we store coordinates (x,y)
@@ -544,11 +538,7 @@ def readVRPWithoutListCities(file):
     Function that read the .vrp file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ 
     and return the list of cities, the list of demand of every cities, the list of capacity of every vehicules and the cost matrix
     """
-    try:
-        f = open(file, "r")
-    except OSError:
-        print("Could not open/read file:", file)
-        exit()
+    f = open(file, "r")
 
     costMatrix = []
     listDemand = []
@@ -569,11 +559,11 @@ def readVRPWithoutListCities(file):
     for i in range(0, numberVehicles):
         listVehicles.append(int(lineNumbers[0]))
 
-    while "EDGE_WEIGHT_SECTION\n" != line:
+    while ("EDGE_WEIGHT_SECTION" in line) == 0:
         line = f.readline()
     listUnorderedCost = []
 
-    while (line != "DEMAND_SECTION\n"):
+    while ("DEMAND_SECTION" in line) == 0:
         line = f.readline()
         costsInsideLine = re.findall("[0-9]+", line)
         for i in range(0,len(costsInsideLine)):
@@ -629,11 +619,7 @@ def readSOL(file, numberVehicles):
     Function that read the .sol file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ and return 
     the supposed optimised solution of our problem
     """
-    try:
-        f = open(file, "r")
-    except OSError:
-        print("Could not open/read file:", file)
-        exit()
+    f = open(file, "r")
 
     listPositionsPerCluster = []
 
@@ -662,7 +648,7 @@ def readSOL(file, numberVehicles):
 # --------------------------------------------------------------------------------------------- #
 #                                     selfgeneration                                            #
 # --------------------------------------------------------------------------------------------- #
-def selfgeneration(numberOfVehicles, numberOfCities, capaConsumptionMin, capaConsumptionMax):
+def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaConsumptionMax):
     #Define our problem, the only part you need to change for the problem you want
     
     # To Erase    capacityOfCar = [50, 40, 50, 50, 50 ,50 ,50 ,50]
@@ -673,9 +659,9 @@ def selfgeneration(numberOfVehicles, numberOfCities, capaConsumptionMin, capaCon
     listTimerTSP = []
     listnumberOfCity = []
 
-    #We generate randomly the capacity of vehicles
-    capacityOfCarInt = int(math.ceil( (capaConsumptionMax * numberOfCities) / numberOfVehicles))
-    capacityOfCar = [capacityOfCarInt for i in range(numberOfVehicles)]
+    #We generate randomly the capacity of cars
+    capacityOfCarInt = int(math.ceil( (capaConsumptionMax * numberOfCities) / numberOfCars))
+    capacityOfCar = [capacityOfCarInt for i in range(numberOfCars)]
 
 
 
@@ -690,20 +676,20 @@ def selfgeneration(numberOfVehicles, numberOfCities, capaConsumptionMin, capaCon
 
     #We generate the needed requirement for execute our problem
     #The cities and the costMatrix c2
-    listOfCities, c2 = genererateRandomCase (numberOfCities)
-    numberOfNodes = numberOfCities + 1 #We have n cities and 1 depot
+    listOfCities, c2 = genererateRandomCase (numberOfCity)
+    numberOfNodes = numberOfCity + 1 #We have n cities and 1 depot
 
     # We add the capacity consumption of each package/city
 
     
  
     volume = []
-    for i in range(numberOfCities):
+    for i in range(numberOfCity):
         n = random.randint(capaConsumptionMin,capaConsumptionMax)
         volume.append(n)
 
     print("random capacityOfCar : ", capacityOfCar)
-    print("numberOfCity:", numberOfCities)
+    print("numberOfCity:", numberOfCity)
     print(capacityOfCar)
     print("random capa consumption ")
     print(volume)
@@ -802,11 +788,12 @@ def selfgeneration(numberOfVehicles, numberOfCities, capaConsumptionMin, capaCon
 # --------------------------------------------------------------------------------------------- #
 #                                     literatureGeneration                                      #
 # --------------------------------------------------------------------------------------------- #
-def literatureGeneration(fileName) :
+def literatureGeneration(path_to_file, fileName, path_to_png) :
+    print("CVRP for ",fileName)
     startCVRP = time.time()
 
     #We get the data of the problem
-    listCities, listDemand, listVehicles, costMatrix = readVRP(str(fileName)+".vrp")
+    listCities, listDemand, listVehicles, costMatrix = readVRP(str(path_to_file+fileName)+".vrp")
     plotCostMatrix(costMatrix)
     numberOfCities = len(listCities)
 
@@ -819,7 +806,7 @@ def literatureGeneration(fileName) :
     listClusters = generateClustersFromCSV(len(listVehicles), numberOfCities)
  
     clusteurCostMatrix = generateCostMatrixPerCluster(listClusters, costMatrix)
-    plotClusters(listCities, listClusters, "Clusters_"+fileName+".png", np.round(ClusterTimer,2))
+    plotClusters(listCities, listClusters, path_to_png+"Clusters_"+fileName+".png", np.round(ClusterTimer,2))
 
 
     #                         ------- TSP -------
@@ -837,16 +824,21 @@ def literatureGeneration(fileName) :
     endCVRP = time.time()
 
 
-    
-    #We plot our final result
-    plotTSP(listCities, listPositionsPerCluster, "TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
 
-    
+    #We plot our final result
+    plotTSP(listCities, listPositionsPerCluster, path_to_png+"TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
+
+
+
+    Quantum_Resolution = calculateFinalCost(costMatrix, listPositionsPerCluster)
+    OptimalResolution = calculateFinalCost(costMatrix, readSOL(str(path_to_file+fileName)+".sol", len(listVehicles)))
 
     #We calculate and print the final cost of our solution and the one of the optimised solution
-    print("Quantum Resolution:", calculateFinalCost(costMatrix, listPositionsPerCluster))
-    print("Optimal Resolution:", calculateFinalCost(costMatrix, readSOL(str(fileName)+".sol", len(listVehicles))))
-    return
+    print("Total time :", endCVRP-startCVRP, "Clusturing time : ", ClusterTimer, "TSP time : ",TSPTimer)
+    print("Quantum Resolution:", Quantum_Resolution)
+    print("Optimal Resolution:", OptimalResolution)
+
+    return (fileName, endCVRP-startCVRP, ClusterTimer, TSPTimer, Quantum_Resolution, OptimalResolution)
  
 
 
@@ -857,11 +849,12 @@ def literatureGeneration(fileName) :
 # --------------------------------------------------------------------------------------------- #
 #                               literatureGenerationWithoutListCities                           #
 # --------------------------------------------------------------------------------------------- #
-def literatureGenerationWithoutListCities(fileName) :
+def literatureGenerationWithoutListCities(path_to_file, fileName) :
+    print("CVRP for ",fileName)
     startCVRP = time.time()
 
     #We get the data of the problem
-    listDemand, listVehicles, costMatrix = readVRPWithoutListCities(str(fileName)+".vrp")
+    listDemand, listVehicles, costMatrix = readVRPWithoutListCities(str(path_to_file+fileName)+".vrp")
     plotCostMatrix(costMatrix)
     numberOfCities = len(costMatrix[0])
 
@@ -889,13 +882,17 @@ def literatureGenerationWithoutListCities(fileName) :
     for i in range (len(listClusters)):
         listPositionsPerCluster.append(generateTSPPositionFromCSV(str(i)+".csv", listClusters[i]))
     endCVRP = time.time()
-    
 
+
+    Quantum_Resolution = calculateFinalCost(costMatrix, listPositionsPerCluster)
+    OptimalResolution = calculateFinalCost(costMatrix, readSOL(str(path_to_file+fileName)+".sol", len(listVehicles)))
 
     #We calculate and print the final cost of our solution and the one of the optimised solution
-    print("Quantum Resolution:", calculateFinalCost(costMatrix, listPositionsPerCluster))
-    print("Optimal Resolution:", calculateFinalCost(costMatrix, readSOL(str(fileName)+".sol", len(listVehicles))))
-    return
+    print("Total time :", endCVRP-startCVRP, "Clusturing time : ", ClusterTimer, "TSP time : ",TSPTimer)
+    print("Quantum Resolution:", Quantum_Resolution)
+    print("Optimal Resolution:", OptimalResolution)
+
+    return (fileName, endCVRP-startCVRP, ClusterTimer, TSPTimer, Quantum_Resolution, OptimalResolution)
  
 
 
@@ -912,15 +909,34 @@ def literatureGenerationWithoutListCities(fileName) :
 #                                         MAIN                                                 #
 # -------------------------------------------------------------------------------------------- #
 
+path_to_png = "/workspace/CVRPQuantumOptimization/PNG/"
+path_to_file = "/workspace/CVRPQuantumOptimization/P/"
+
+if not os.path.exists(path_to_png):
+    os.makedirs(path_to_png)
+
+#                              Prepare dataframe to stock everything
+df = pd.DataFrame(columns = ['Name', 'TotalTime', 'ClusteringTime', 'TSPTime', 'QuantumResolutionScore', 'OptimalResolutionScore'])
+
+
 #                                     Literature instances
 # Literature instances from http://vrp.galgos.inf.puc-rio.br/index.php/en/ 
 
 # Set A (Augerat, 1995) 
-literatureGeneration("E-n23-k3")
-literatureGenerationWithoutListCities("E-n13-k4")
-#literatureGenerationWithoutListCities("Loggi-n401-k23")
-# Set B (Augerat, 1995)
-# literatureGeneration("B-n57-k7")
+
+df = pd.DataFrame()
+
+for f in os.listdir(path_to_file):
+    if f[-3:] == "vrp":
+        file = f[:-4]
+        tuple_value = literatureGeneration(path_to_file, file, path_to_png)
+        df = pd.concat((df, pd.DataFrame([{'Name' : tuple_value[0], 'TotalTime' : tuple_value[1], 'ClusteringTime' : tuple_value[2], 'TSPTime' : tuple_value[3], 'QuantumResolutionScore' : tuple_value[4], 'OptimalResolutionScore' : tuple_value[5]}])), axis = 0)
+        df.to_csv("Result_set_P.csv", index = False,encoding='utf-8', sep = ";")
+
+#tuple_value = literatureGeneration(path_to_file, "B-n31-k5", path_to_png)
+#df = pd.concat((df, pd.DataFrame([{'Name' : tuple_value[0], 'TotalTime' : tuple_value[1], 'ClusteringTime' : tuple_value[2], 'TSPTime' : tuple_value[3], 'QuantumResolutionScore' : tuple_value[4], 'OptimalResolutionScore' : tuple_value[5]}])), axis = 0)
+#tuple_value = literatureGeneration(path_to_file, "B-n34-k5", path_to_png)
+#df = pd.concat((df, pd.DataFrame([{'Name' : tuple_value[0], 'TotalTime' : tuple_value[1], 'ClusteringTime' : tuple_value[2], 'TSPTime' : tuple_value[3], 'QuantumResolutionScore' : tuple_value[4], 'OptimalResolutionScore' : tuple_value[5]}])), axis = 0)
 
 # Set E (Christofides and Eilon, 1969) 
 # literatureGeneration("E-n30-k3")
