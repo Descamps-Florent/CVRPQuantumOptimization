@@ -505,7 +505,7 @@ def readVRP(file):
     for i in range(0, numberCities):
         line = f.readline()
         lineNumbers = re.findall("[\+\-]?[0-9]+[.]?[0-9]*", line)
-        listCities.append([int(lineNumbers[1]), int(lineNumbers[2])])
+        listCities.append([float(lineNumbers[1]), float(lineNumbers[2])])
 
     f.readline()
 
@@ -565,7 +565,7 @@ def readVRPWithoutListCities(file):
 
     while ("DEMAND_SECTION" in line) == 0:
         line = f.readline()
-        costsInsideLine = re.findall("[0-9]+", line)
+        costsInsideLine = re.findall("[\+\-]?[0-9]+[.]?[0-9]*", line)
         for i in range(0,len(costsInsideLine)):
             listUnorderedCost.append(costsInsideLine[i])
     
@@ -614,7 +614,7 @@ def readVRPWithoutListCities(file):
 # --------------------------------------------------------------------------------------------- #
 #                                     readSOL                                                   #
 # --------------------------------------------------------------------------------------------- #
-def readSOL(file, numberVehicles):
+def readSOL(file):
     """
     Function that read the .sol file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ and return 
     the supposed optimised solution of our problem
@@ -623,15 +623,17 @@ def readSOL(file, numberVehicles):
 
     listPositionsPerCluster = []
 
-    for i in range(0, numberVehicles):
+    line = f.readline()
+
+    while "Route" in line:
         cluster = []
         cluster.append(0)
-        line = f.readline()
         lineNumbers = re.findall("[\+\-]?[0-9]+", line)
         for j in range(1, len(lineNumbers)):
             cluster.append(int(lineNumbers[j]))
         cluster.append(0)
         listPositionsPerCluster.append(cluster)
+        line = f.readline()
     
     return listPositionsPerCluster
 
@@ -831,7 +833,7 @@ def literatureGeneration(path_to_file, fileName, path_to_png) :
 
 
     Quantum_Resolution = calculateFinalCost(costMatrix, listPositionsPerCluster)
-    OptimalResolution = calculateFinalCost(costMatrix, readSOL(str(path_to_file+fileName)+".sol", len(listVehicles)))
+    OptimalResolution = calculateFinalCost(costMatrix, readSOL(str(path_to_file+fileName)+".sol"))
 
     #We calculate and print the final cost of our solution and the one of the optimised solution
     print("Total time :", endCVRP-startCVRP, "Clusturing time : ", ClusterTimer, "TSP time : ",TSPTimer)
@@ -885,7 +887,7 @@ def literatureGenerationWithoutListCities(path_to_file, fileName) :
 
 
     Quantum_Resolution = calculateFinalCost(costMatrix, listPositionsPerCluster)
-    OptimalResolution = calculateFinalCost(costMatrix, readSOL(str(path_to_file+fileName)+".sol", len(listVehicles)))
+    OptimalResolution = calculateFinalCost(costMatrix, readSOL(str(path_to_file+fileName)+".sol"))
 
     #We calculate and print the final cost of our solution and the one of the optimised solution
     print("Total time :", endCVRP-startCVRP, "Clusturing time : ", ClusterTimer, "TSP time : ",TSPTimer)
@@ -910,7 +912,7 @@ def literatureGenerationWithoutListCities(path_to_file, fileName) :
 # -------------------------------------------------------------------------------------------- #
 
 path_to_png = "/workspace/CVRPQuantumOptimization/PNG/"
-path_to_file = "/workspace/CVRPQuantumOptimization/P/"
+path_to_file = "/workspace/CVRPQuantumOptimization/M/"
 
 if not os.path.exists(path_to_png):
     os.makedirs(path_to_png)
@@ -931,7 +933,7 @@ for f in os.listdir(path_to_file):
         file = f[:-4]
         tuple_value = literatureGeneration(path_to_file, file, path_to_png)
         df = pd.concat((df, pd.DataFrame([{'Name' : tuple_value[0], 'TotalTime' : tuple_value[1], 'ClusteringTime' : tuple_value[2], 'TSPTime' : tuple_value[3], 'QuantumResolutionScore' : tuple_value[4], 'OptimalResolutionScore' : tuple_value[5]}])), axis = 0)
-        df.to_csv("Result_set_P.csv", index = False,encoding='utf-8', sep = ";")
+        df.to_csv("Result_set_M.csv", index = False,encoding='utf-8', sep = ";")
 
 #tuple_value = literatureGeneration(path_to_file, "B-n31-k5", path_to_png)
 #df = pd.concat((df, pd.DataFrame([{'Name' : tuple_value[0], 'TotalTime' : tuple_value[1], 'ClusteringTime' : tuple_value[2], 'TSPTime' : tuple_value[3], 'QuantumResolutionScore' : tuple_value[4], 'OptimalResolutionScore' : tuple_value[5]}])), axis = 0)
