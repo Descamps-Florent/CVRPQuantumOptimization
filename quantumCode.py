@@ -54,7 +54,11 @@ def generateCostMatrix(listCities):
 def plotCostMatrix(costMatrix):
     cityNumber = [i for i in range(0,len(costMatrix))]
     df = pd.DataFrame(costMatrix, columns=cityNumber, index=cityNumber)
-    text_file = open("CostMatrix.txt", "w")
+    try:
+        text_file = open("CostMatrix.txt", "w")
+    except OSError:
+        print("Could not open/read file:", file)
+        exit()
     dfAsString = df.to_string(header=True, index=True)
     text_file.write(dfAsString)
     text_file.close()
@@ -187,7 +191,7 @@ def VerifClusturing(matrixOfCluster, vectorOfCapacity, vectorOfVolume):
 # --------------------------------------------------------------------------------------------- #
 #                                         generateClustersFromCSV                               #
 # --------------------------------------------------------------------------------------------- #
-def generateClustersFromCSV(numberOfVehicles, numberOfCity):
+def generateClustersFromCSV(numberOfVehicles, numberOfCities):
     """
     Function that read the .csv file of the clusturing to return the list of cluster
     """
@@ -197,9 +201,9 @@ def generateClustersFromCSV(numberOfVehicles, numberOfCity):
 
     listClusters = []
     for i in range(0,numberOfVehicles):
-        #We get every cities of every vehicules, so cluster
+        #We get every cities of every vehicles, so cluster
         cluster = []
-        for j in range(0,numberOfCity):
+        for j in range(0,numberOfCities):
             keyList = 'x' + str(j) + '_' + str(i)
             if (relation[keyList] == 1):
                 cluster.append(j)
@@ -475,9 +479,13 @@ def calculateFinalCost(costMatrix, listPositionsPerCluster):
 def readVRP(file):
     """
     Function that read the .vrp file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ 
-    and return the list of cities, the list of demand of every cities, the list of capacity of every vehicules and the cost matrix
+    and return the list of cities, the list of demand of every cities, the list of capacity of every vehicles and the cost matrix
     """
-    f = open(file, "r")
+    try:
+        f = open(file, "r")
+    except OSError:
+        print("Could not open/read file:", file)
+        exit()
 
     listCities = []
     listDemand = []
@@ -536,9 +544,13 @@ def readVRP(file):
 def readVRPWithoutListCities(file):
     """
     Function that read the .vrp file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ 
-    and return the list of cities, the list of demand of every cities, the list of capacity of every vehicules and the cost matrix
+    and return the list of cities, the list of demand of every cities, the list of capacity of every vehicles and the cost matrix
     """
-    f = open(file, "r")
+    try:
+        f = open(file, "r")
+    except OSError:
+        print("Could not open/read file:", file)
+        exit()
 
     costMatrix = []
     listDemand = []
@@ -619,7 +631,11 @@ def readSOL(file):
     Function that read the .sol file of the website http://vrp.atd-lab.inf.puc-rio.br/index.php/en/ and return 
     the supposed optimised solution of our problem
     """
-    f = open(file, "r")
+    try:
+        f = open(file, "r")
+    except OSError:
+        print("Could not open/read file:", file)
+        exit()
 
     listPositionsPerCluster = []
 
@@ -650,54 +666,54 @@ def readSOL(file):
 # --------------------------------------------------------------------------------------------- #
 #                                     selfgeneration                                            #
 # --------------------------------------------------------------------------------------------- #
-def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaConsumptionMax):
+def selfgeneration(numberOfVehicles, numberOfCities, capaConsumptionMin, capaConsumptionMax):
     #Define our problem, the only part you need to change for the problem you want
     
-    # To Erase    capacityOfCar = [50, 40, 50, 50, 50 ,50 ,50 ,50]
+    # To Erase    capacityOfVehicles = [50, 40, 50, 50, 50 ,50 ,50 ,50]
     
     
     listTimerCVRP = []
     listTimerCluster = []
     listTimerTSP = []
-    listnumberOfCity = []
+    listnumberOfCities = []
 
-    #We generate randomly the capacity of cars
-    capacityOfCarInt = int(math.ceil( (capaConsumptionMax * numberOfCities) / numberOfCars))
-    capacityOfCar = [capacityOfCarInt for i in range(numberOfCars)]
+    #We generate randomly the capacity of vehicles
+    capacityOfVehiclesInt = int(math.ceil( (capaConsumptionMax * numberOfCities) / numberOfVehicles))
+    capacityOfVehicles = [capacityOfVehiclesInt for i in range(numberOfVehicles)]
 
 
 
     #To ERASE
     """
-    numberOfCityMin = 200
-    numberOfCityMax = 201
-    numberOfCityStep = 1
+    numberOfCitiesMin = 200
+    numberOfCitiesMax = 201
+    numberOfCitiesStep = 1
     """
-    #To ERASE for numberOfCity in range (numberOfCityMin,numberOfCityMax,numberOfCityStep):
+    #To ERASE for numberOfCities in range (numberOfCitiesMin,numberOfCitiesMax,numberOfCitiesStep):
 
 
     #We generate the needed requirement for execute our problem
     #The cities and the costMatrix c2
-    listOfCities, c2 = genererateRandomCase (numberOfCity)
-    numberOfNodes = numberOfCity + 1 #We have n cities and 1 depot
+    listOfCities, c2 = genererateRandomCase (numberOfCities)
+    numberOfNodes = numberOfCities + 1 #We have n cities and 1 depot
 
     # We add the capacity consumption of each package/city
 
     
  
     volume = []
-    for i in range(numberOfCity):
+    for i in range(numberOfCities):
         n = random.randint(capaConsumptionMin,capaConsumptionMax)
         volume.append(n)
 
-    print("random capacityOfCar : ", capacityOfCar)
-    print("numberOfCity:", numberOfCity)
-    print(capacityOfCar)
+    print("random capacityOfVehicles : ", capacityOfVehicles)
+    print("numberOfCities:", numberOfCities)
+    print(capacityOfVehicles)
     print("random capa consumption ")
     print(volume)
     print("numberOfNodes :", numberOfNodes)
 
-    # TO ERASE    volume = [1 for i in range (numberOfCity)]
+    # TO ERASE    volume = [1 for i in range (numberOfCities)]
     
     volume.insert(0,0) #The depot have no volume
 
@@ -708,17 +724,17 @@ def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaCons
     startCVRP = time.time()
 
     #We generate our clustering
-    ClusterTimer = Classification(numberOfCity,len(capacityOfCar),c2,capacityOfCar,volume)
+    ClusterTimer = Classification(numberOfCities,len(capacityOfVehicles),c2,capacityOfVehicles,volume)
    
     #We prepare our cluster for the TSP and to plot them
-    listClusters = generateClustersFromCSV(len(capacityOfCar), numberOfCity)
+    listClusters = generateClustersFromCSV(len(capacityOfVehicles), numberOfCities)
 
     
-    print('Feasible? => ', VerifClusturing(listClusters,capacityOfCar,volume))
+    print('Feasible? => ', VerifClusturing(listClusters,capacityOfVehicles,volume))
 
 
     clusteurCostMatrix = generateCostMatrixPerCluster(listClusters, c2)
-    plotClusters(listOfCities,listClusters, "Clusters_"+str(numberOfCity)+".png", np.round(ClusterTimer,2))
+    plotClusters(listOfCities,listClusters, "Clusters_"+str(numberOfCities)+".png", np.round(ClusterTimer,2))
 
     #For each cluster, we do one TSP
     TSPTimer = 0
@@ -732,16 +748,16 @@ def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaCons
 
     endCVRP = time.time()
     #We plot the final result
-    plotTSP(listOfCities,listPositionsPerCluster,"TSP_"+str(numberOfCity)+".png", np.round(TSPTimer,2),np.round(endCVRP-startCVRP,2), True, True)
+    plotTSP(listOfCities,listPositionsPerCluster,"TSP_"+str(numberOfCities)+".png", np.round(TSPTimer,2),np.round(endCVRP-startCVRP,2), True, True)
 
     listTimerCluster.append(np.round(ClusterTimer,2))
     listTimerCVRP.append(np.round(endCVRP-startCVRP,2))
     listTimerTSP.append(np.round(TSPTimer,2))
-    listnumberOfCity.append(numberOfCity)
+    listnumberOfCities.append(numberOfCities)
  
     #We plot every timer, usefull when we got a lot of data
     plt.figure()
-    plt.plot(listnumberOfCity,listTimerCluster)
+    plt.plot(listnumberOfCities,listTimerCluster)
     plt.ylabel('Temps en s')
     plt.xlabel('Nombre de ville')
     plt.title("Temps d'execution du clustering en fonction du nombre de ville")
@@ -750,7 +766,7 @@ def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaCons
     plt.close()
 
     plt.figure()
-    plt.plot(listnumberOfCity,listTimerCVRP)
+    plt.plot(listnumberOfCities,listTimerCVRP)
     plt.ylabel('Temps en s')
     plt.xlabel('Nombre de ville')
     plt.title("Temps d'execution du CVRP en fonction du nombre de ville")
@@ -759,7 +775,7 @@ def selfgeneration(numberOfVehicules, numberOfCity, capaConsumptionMin, capaCons
     plt.close()
 
     plt.figure()
-    plt.plot(listnumberOfCity,listTimerTSP)
+    plt.plot(listnumberOfCities,listTimerTSP)
     plt.ylabel('Temps en s')
     plt.xlabel('Nombre de ville')
     plt.title("Temps d'execution du TSP en fonction du nombre de ville")
@@ -967,9 +983,9 @@ for f in os.listdir(path_to_file):
 
 """
 #                                       self generation
-numberOfCars        = 3
+numberOfVehicles        = 3
 numberOfCities      = 20
 capaConsumptionMin  = 1
 capaConsumptionMax  = 4
-selfgeneration(numberOfCars, numberOfCities, capaConsumptionMin, capaConsumptionMax)
+selfgeneration(numberOfVehicles, numberOfCities, capaConsumptionMin, capaConsumptionMax)
 """
