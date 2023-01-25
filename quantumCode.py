@@ -393,6 +393,8 @@ def generateTSPPositionFromCSV(nameOfCSV, clusteurOfCSV):
             if(relation[keyList] == 1):
                 listPositionsPerCluster[j] = int(clusteurOfCSV[i])
     
+    listPositionsPerCluster.append(0)
+    
     return listPositionsPerCluster
 
 
@@ -415,7 +417,6 @@ def plotTSP(listCities, listPositionsPerCluster, nameOfpng, timer, timerTotal, s
     
     #For each cluster
     for i in range(0, len(listPositionsPerCluster)):
-        listPositionsPerCluster[i].append(0)
         #For each city in a cluster
         for j in range(0, len(listPositionsPerCluster[i])):
             #We plot the city with the color defined for the cluster
