@@ -847,6 +847,8 @@ def literatureGeneration(path_to_file, fileName, path_to_png) :
     #We plot our final result
     plotTSP(listCities, listPositionsPerCluster, path_to_png+"TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
 
+    #We plot the solution result
+    plotTSP(listCities, readSOL(str(path_to_file+fileName)+".sol"), path_to_png+"TSP_SOL_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
 
 
     Quantum_Resolution = calculateFinalCost(costMatrix, listPositionsPerCluster)
