@@ -843,7 +843,7 @@ def literatureGeneration(path_to_file, fileName, path_to_png) :
 
     #We plot the clusters of the SOL File
     clustersAndTSPforSOLFile = readSOL(str(path_to_file+fileName)+".sol")
-    plotClusters(listCities, clustersAndTSPforSOLFile, path_to_png+"SOL_Clusters_"+fileName+".png", np.round(ClusterTimer,2))
+    plotClusters(listCities, clustersAndTSPforSOLFile, path_to_png+"SOL_Clusters_"+fileName+".png", 0)
 
 
     #                         ------- TSP -------
@@ -866,7 +866,7 @@ def literatureGeneration(path_to_file, fileName, path_to_png) :
     plotTSP(listCities, listPositionsPerCluster, path_to_png+"TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
 
     #We plot the solution result
-    plotTSP(listCities, clustersAndTSPforSOLFile, path_to_png+"SOL_TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
+    plotTSP(listCities, clustersAndTSPforSOLFile, path_to_png+"SOL_TSP_"+fileName+".png", 0, 0, True, True)
 
 
     Quantum_Resolution = calculateFinalCost(costMatrix, listPositionsPerCluster)
