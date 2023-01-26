@@ -20,6 +20,9 @@ import os
 
 
 
+# --------------------------------------------------------------------------------------------- #
+#                                    GenerateRandomCase                                         #
+# --------------------------------------------------------------------------------------------- #
 def genererateRandomCase(nbCities):
     """
     Function that generates a random case of CVRP and return the list of the cities and it's cost matrix
@@ -36,6 +39,9 @@ def genererateRandomCase(nbCities):
 
 
 
+# --------------------------------------------------------------------------------------------- #
+#                                   GenerateCostMatrix                                          #
+# --------------------------------------------------------------------------------------------- #
 def generateCostMatrix(listCities):
     """
     Function that generate the distance matrix of the input cities
@@ -51,6 +57,13 @@ def generateCostMatrix(listCities):
     return costMatrix
 
 
+
+
+
+
+# --------------------------------------------------------------------------------------------- #
+#                                     PlotCostMatrix                                            #
+# --------------------------------------------------------------------------------------------- #
 def plotCostMatrix(costMatrix):
     cityNumber = [i for i in range(0,len(costMatrix))]
     df = pd.DataFrame(costMatrix, columns=cityNumber, index=cityNumber)
@@ -375,7 +388,7 @@ def TSP (nbOfPoint, matrixOfCost, fileName):
 
 
 # --------------------------------------------------------------------------------------------- #
-#                                     VerifClusturing                                           #
+#                                   GenerateTSPFromCSV                                          #
 # --------------------------------------------------------------------------------------------- #
 def generateTSPPositionFromCSV(nameOfCSV, clusteurOfCSV):
     """
@@ -824,8 +837,13 @@ def literatureGeneration(path_to_file, fileName, path_to_png) :
     #We prepare our cluster for the TSP and to plot them
     listClusters = generateClustersFromCSV(len(listVehicles), numberOfCities)
  
+    #We plot our clusters
     clusteurCostMatrix = generateCostMatrixPerCluster(listClusters, costMatrix)
     plotClusters(listCities, listClusters, path_to_png+"Clusters_"+fileName+".png", np.round(ClusterTimer,2))
+
+    #We plot the clusters of the SOL File
+    clustersAndTSPforSOLFile = readSOL(str(path_to_file+fileName)+".sol")
+    plotClusters(listCities, clustersAndTSPforSOLFile, path_to_png+"SOL_Clusters_"+fileName+".png", np.round(ClusterTimer,2))
 
 
     #                         ------- TSP -------
@@ -848,11 +866,11 @@ def literatureGeneration(path_to_file, fileName, path_to_png) :
     plotTSP(listCities, listPositionsPerCluster, path_to_png+"TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
 
     #We plot the solution result
-    plotTSP(listCities, readSOL(str(path_to_file+fileName)+".sol"), path_to_png+"TSP_SOL_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
+    plotTSP(listCities, clustersAndTSPforSOLFile, path_to_png+"SOL_TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
 
 
     Quantum_Resolution = calculateFinalCost(costMatrix, listPositionsPerCluster)
-    OptimalResolution = calculateFinalCost(costMatrix, readSOL(str(path_to_file+fileName)+".sol"))
+    OptimalResolution = calculateFinalCost(costMatrix, clustersAndTSPforSOLFile)
 
     #We calculate and print the final cost of our solution and the one of the optimised solution
     print("Total time :", endCVRP-startCVRP, "Clusturing time : ", ClusterTimer, "TSP time : ",TSPTimer)
