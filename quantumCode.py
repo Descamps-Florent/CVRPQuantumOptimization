@@ -507,7 +507,7 @@ def readVRP(file):
 
     #We get the number of cities and vehicles from filename
     line = f.readline()
-    lineNumbers = re.findall("[\+\-]?[0-9]+", line)
+    lineNumbers = re.findall("[0-9]+", line)
     numberCities = int(lineNumbers[0])
     
     numberVehicles = int(lineNumbers[1])
@@ -863,10 +863,10 @@ def literatureGeneration(path_to_file, fileName, path_to_png) :
 
 
     #We plot our final result
-    plotTSP(listCities, listPositionsPerCluster, path_to_png+"TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), True, True)
+    plotTSP(listCities, listPositionsPerCluster, path_to_png+"TSP_"+fileName+".png", np.round(TSPTimer,2), np.round(endCVRP-startCVRP,2), False, True)
 
     #We plot the solution result
-    plotTSP(listCities, clustersAndTSPforSOLFile, path_to_png+"SOL_TSP_"+fileName+".png", 0, 0, True, True)
+    plotTSP(listCities, clustersAndTSPforSOLFile, path_to_png+"SOL_TSP_"+fileName+".png", 0, 0, False, True)
 
 
     Quantum_Resolution = calculateFinalCost(costMatrix, listPositionsPerCluster)
